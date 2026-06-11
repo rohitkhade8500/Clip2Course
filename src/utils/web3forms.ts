@@ -8,7 +8,7 @@
 //   4. Paste it below replacing the placeholder
 // ============================================================
 
-const WEB3FORMS_ACCESS_KEY = 'YOUR_ACCESS_KEY_HERE'
+const WEB3FORMS_ACCESS_KEY = '54082be8-9297-4c73-b257-62256f0ae6aa'
 
 const WEB3FORMS_ENDPOINT = 'https://api.web3forms.com/submit'
 

@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from 'react'
 import { ArrowRight, Play, Zap, BookOpen, Loader2 } from 'lucide-react'
 import { submitToWeb3Forms } from '../utils/web3forms'
+import { sendWaitlistConfirmation } from '../utils/emailjs'
 
 export default function Hero() {
   const [email, setEmail] = useState('')
@@ -15,12 +16,19 @@ export default function Hero() {
     setErrorMsg('')
 
     try {
+      const subscriberEmail = email // capture before clearing
+
       await submitToWeb3Forms({
         subject: '🎉 New Waitlist Signup — Clip2Course',
         from_name: 'Waitlist Subscriber',
-        email,
-        message: `New waitlist signup from: ${email}`,
+        email: subscriberEmail,
+        message: `New waitlist signup from: ${subscriberEmail}`,
       })
+
+      // Fire-and-forget: send confirmation email to subscriber
+      // (doesn't block the success UI — errors are silently logged)
+      sendWaitlistConfirmation(subscriberEmail)
+
       setStatus('success')
       setEmail('')
       setTimeout(() => setStatus('idle'), 4000)

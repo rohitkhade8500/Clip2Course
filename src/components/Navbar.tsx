@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Menu, X, Sparkles, Sun, Moon, Monitor } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Menu, X, Sparkles, Sun, Moon, Monitor, User } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
+import { useAuth } from '../context/AuthContext'
 
 const navLinks = [
   { label: 'About Us', href: '#about-us' },
@@ -14,13 +16,34 @@ const navLinks = [
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [signingOut, setSigningOut] = useState(false)
   const { theme, setTheme } = useTheme()
+  const { status, user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  // 'checking' is not "signed out": rendering the anonymous links here would
+  // flash Sign in at a user who is in fact signed in (Requirement 6.7), so the
+  // auth slot stays empty until the session check settles.
+  const checking = status === 'checking'
+  const signedIn = status === 'authenticated' && user !== null
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  async function handleLogout() {
+    setSigningOut(true)
+    try {
+      await logout()
+      setMobileOpen(false)
+      // Requirement 3.3: land back on the public page once the user is cleared
+      navigate('/')
+    } finally {
+      setSigningOut(false)
+    }
+  }
 
   const themeOptions: { value: 'light' | 'dark' | 'system'; icon: typeof Sun; label: string }[] = [
     { value: 'light', icon: Sun, label: 'Light' },
@@ -32,8 +55,8 @@ export default function Navbar() {
     <nav
       id="navbar"
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? 'bg-white/80 dark:bg-surface/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800'
+        scrolled || mobileOpen
+          ? 'bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800'
           : 'bg-transparent'
       }`}
     >
@@ -80,13 +103,58 @@ export default function Navbar() {
               ))}
             </div>
 
-            <a
-              href="#hero"
-              className="glow-btn px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-all"
-              id="nav-cta"
-            >
-              Join Waitlist
-            </a>
+            {checking ? null : signedIn ? (
+              <>
+                <span
+                  className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap"
+                  id="nav-user"
+                >
+                  <User className="w-4 h-4 text-primary-light" />
+                  {user.displayName}
+                </span>
+
+                <Link
+                  to="/app/courses"
+                  className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
+                >
+                  My Courses
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={signingOut}
+                  className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap cursor-pointer disabled:opacity-60"
+                >
+                  {signingOut ? 'Logging out...' : 'Log out'}
+                </button>
+
+                <Link
+                  to="/app/dashboard"
+                  className="glow-btn px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-all"
+                  id="nav-cta"
+                >
+                  Dashboard
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors whitespace-nowrap"
+                >
+                  Sign in
+                </Link>
+
+                <Link
+                  to="/register"
+                  className="glow-btn px-5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-light transition-all"
+                  id="nav-cta"
+                >
+                  Create account
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Controls */}
@@ -134,13 +202,53 @@ export default function Navbar() {
                   {link.label}
                 </a>
               ))}
-              <a
-                href="#hero"
-                onClick={() => setMobileOpen(false)}
-                className="glow-btn px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold text-center hover:bg-primary-light transition-all mt-2"
-              >
-                Join Waitlist
-              </a>
+              {checking ? null : signedIn ? (
+                <>
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 px-2 py-1.5">
+                    <User className="w-4 h-4 text-primary-light" />
+                    {user.displayName}
+                  </span>
+                  <Link
+                    to="/app/courses"
+                    onClick={() => setMobileOpen(false)}
+                    className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-2 py-1.5"
+                  >
+                    My Courses
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    disabled={signingOut}
+                    className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-2 py-1.5 text-left cursor-pointer disabled:opacity-60"
+                  >
+                    {signingOut ? 'Logging out...' : 'Log out'}
+                  </button>
+                  <Link
+                    to="/app/dashboard"
+                    onClick={() => setMobileOpen(false)}
+                    className="glow-btn px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold text-center hover:bg-primary-light transition-all mt-2"
+                  >
+                    Dashboard
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors px-2 py-1.5"
+                  >
+                    Sign in
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={() => setMobileOpen(false)}
+                    className="glow-btn px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold text-center hover:bg-primary-light transition-all mt-2"
+                  >
+                    Create account
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

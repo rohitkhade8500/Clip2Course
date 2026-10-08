@@ -12,6 +12,17 @@ dist
 dist-ssr
 *.local
 
+# Local SQLite database (created at server startup)
+server/data/*.sqlite
+server/data/*.sqlite-journal
+server/data/*.sqlite-wal
+server/data/*.sqlite-shm
+
+# Environment variables (contain API keys)
+.env
+.env.local
+.env.*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

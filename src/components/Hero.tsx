@@ -1,9 +1,17 @@
 import { type FormEvent, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { ArrowRight, Play, Zap, BookOpen, Loader2 } from 'lucide-react'
 import { submitToWeb3Forms } from '../utils/web3forms'
 import { sendWaitlistConfirmation } from '../utils/emailjs'
+import { useAuth } from '../context/AuthContext'
 
 export default function Hero() {
+  const { status: authStatus } = useAuth()
+  // Requirement 7.8: a signed-in visitor's primary CTA is their dashboard, not
+  // a fresh start. 'checking' keeps the anonymous copy, which is also the
+  // correct destination once ProtectedRoute has resolved the session.
+  const signedIn = authStatus === 'authenticated'
+
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMsg, setErrorMsg] = useState('')
@@ -67,6 +75,23 @@ export default function Hero() {
           Drop a YouTube link or upload a raw video. Clip2Course AI automatically generates
           structured modules, quizzes, summaries, and study notes — in minutes, not hours.
         </p>
+
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8 fade-in-up" style={{ animationDelay: '0.25s' }}>
+          <Link
+            to={signedIn ? '/app/dashboard' : '/app/create'}
+            className="glow-btn pulse-glow px-8 py-3.5 rounded-xl bg-primary text-white font-semibold text-base flex items-center justify-center gap-2 hover:bg-primary-light transition-all"
+          >
+            {signedIn ? 'Go to Dashboard' : "Get Started — It's Free"}{' '}
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+          <Link
+            to="/app/courses"
+            className="px-8 py-3.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-semibold text-base hover:bg-slate-100 dark:hover:bg-surface-light transition-all"
+          >
+            My Courses
+          </Link>
+        </div>
 
         {/* Waitlist Form */}
         <form
